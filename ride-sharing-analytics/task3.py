@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import from_json, col, sum, window
+from pyspark.sql.functions import from_json, col, sum, window, avg
 from pyspark.sql.types import StructType, StructField, StringType, DoubleType, TimestampType
 from pyspark.sql.functions import to_timestamp, col
 import os
@@ -38,8 +38,8 @@ converted_df = converted_df.withWatermark("timestamp", "10 minutes")
 windowed_agg_df = converted_df \
     .groupBy(
         # Group by the 5-minute window, sliding every 1 minute
-        window(col("timestamp"), "5 minutes", "1 minute")
-    ) \
+        window(col("timestamp"), "5 minutes", "1 minute"), \
+    col("driver_id")) \
     .agg(
         sum(col("fare_amount")).alias("window_total_fare")
     )
@@ -48,6 +48,7 @@ windowed_agg_df = converted_df \
 final_output_df = windowed_agg_df.select(
     col("window.start").alias("window_start"),
     col("window.end").alias("window_end"),
+    col("driver_id"),
     col("window_total_fare")
 )
 
@@ -62,8 +63,7 @@ def save_to_csv(df, batch_id):
         os.makedirs(base_dir, exist_ok=True)
         
         # Save the batch DataFrame as a CSV file with headers included
-        # Coalesce(1) ensures a single 'part-xxx.csv' file inside the directory
-        df.coalesce(1).write \
+        df.write \
             .format("csv") \
             .mode("overwrite") \
             .option("header", "true") \
@@ -74,8 +74,7 @@ def save_to_csv(df, batch_id):
 # Use foreachBatch to apply the function to each micro-batch
 query = final_output_df.writeStream \
     .foreachBatch(save_to_csv) \
-    .outputMode("append") \
-    .trigger(processingTime="10 seconds") \
+    .outputMode("update") \
     .option("checkpointLocation", "/tmp/checkpoints/task3_windowed") \
     .start()
 
