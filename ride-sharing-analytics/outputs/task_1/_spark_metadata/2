@@ -1,0 +1,3 @@
+v1
+{"path":"file:///workspaces/ITCS6190-L8-SparkSQL/ride-sharing-analytics/outputs/task_1/part-00000-57586112-6a77-456c-a0cf-43d81729e4e9-c000.csv","size":266,"isDir":false,"modificationTime":1760545200243,"blockReplication":1,"blockSize":33554432,"action":"add"}
+{"path":"file:///workspaces/ITCS6190-L8-SparkSQL/ride-sharing-analytics/outputs/task_1/part-00001-b12e7d11-6ae1-4ead-81ff-6fe042b8f283-c000.csv","size":196,"isDir":false,"modificationTime":1760545200241,"blockReplication":1,"blockSize":33554432,"action":"add"}
