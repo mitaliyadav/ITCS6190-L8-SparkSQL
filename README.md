@@ -93,7 +93,6 @@ By the end of this assignment, you should be able to:
 ## **Logic Flow:**
 The task1.py script is the foundational data pipeline. It reads raw JSON data strings directly from the streaming source (TCP socket), parses them into a structured DataFrame using a predefined schema, and then writes the records to a target directory in CSV format. It operates in append output mode and uses a 5-second processing time trigger.
 
-Set of Steps of the File:
 1. Initialize Spark Session: Creates a Spark session named RideSharingAnalytics.
 2. Define Schema: Defines the StructType schema for the incoming ride-sharing JSON records (trip ID, driver ID, distance, fare, timestamp).
 3. Read Stream: Connects to the TCP socket (localhost:9999) using spark.readStream.
@@ -102,6 +101,9 @@ Set of Steps of the File:
 6. outputMode("append"): Writes only new records to the sink.
 7. format("csv"): Specifies the output format.
 8. trigger(processingTime='5 seconds'): Processes a batch of data every 5 seconds.
+
+## *Sample Output*
+<img width="609" height="152" alt="image" src="https://github.com/user-attachments/assets/16df3fde-7e53-4d46-ba52-3d7294eb3b74" />
 
 ---
 
@@ -112,12 +114,20 @@ Set of Steps of the File:
   • Average distance (distance_km) grouped by driver_id.
 2. Output these aggregations to the console in real time.
 
-## **Instructions:**
-1. Reuse the parsed DataFrame from Task 1.
-2. Group by driver_id and compute:
-3. SUM(fare_amount) as total_fare
-4. AVG(distance_km) as avg_distance
-5. Store the result in csv
+## **Logic Flow:**
+
+1. Setup & Parsing: Steps 1-4 are similar to Task 1 (initialization, schema definition, reading, and parsing).
+2. Timestamp Conversion & Watermarking: Converts the timestamp string to TimestampType and applies a 10-minute watermark to manage event-time skew.
+3. Aggregation: Groups the data by driver_id and calculates:
+     sum(fare_amount) as total_fare.
+     avg(distance_km) as avg_distance.
+4. Start Query: Initiates the streaming query using writeStream with:
+     outputMode("complete"): Rewrites the entire state (all drivers' current totals) on every batch.
+     foreachBatch(save_to_csv): Custom function to write each batch's result to CSV.
+     trigger(processingTime="10 seconds"): Processes a batch of data every 10 seconds.
+
+## **Sample Output**
+<img width="331" height="596" alt="image" src="https://github.com/user-attachments/assets/c1df8f16-d2d6-40ed-b7ad-245424df6131" />
 
 ---
 
@@ -131,6 +141,21 @@ Set of Steps of the File:
 1. Convert the string-based timestamp column to a TimestampType column (e.g., event_time).
 2. Use Spark’s window function to aggregate over a 5-minute window, sliding by 1 minute, for the sum of fare_amount.
 3. Output the windowed results to csv.
+
+## **Logic Flow**
+
+1. Timestamp Conversion & Watermarking: Converts the timestamp string and applies a 1-minute watermark.
+2. Windowed Aggregation: Groups the data by a time window:
+    Uses window(col("timestamp"), "1 minute", "1 minute"). This defines a 1-minute window that slides forward by 1 minute, creating non-overlapping (tumbling) windows.
+    Calculates avg(col("fare_amount")) as window_avg_fare.
+3. Output Selection: Extracts the window.start and window.end columns to explicitly show the aggregation period.
+4. Start Query: Initiates the streaming query using writeStream with:
+    outputMode("append"): Writes a new aggregate row every time a 1-minute window is closed and calculated.
+    foreachBatch(save_to_csv): Custom function to write each batch's result to a unique output directory.
+    trigger(processingTime="10 seconds"): Processes a batch of data every 10 seconds.
+
+## **Sample Output**
+<img width="498" height="71" alt="image" src="https://github.com/user-attachments/assets/71119f09-168f-4bfa-83fa-11aea3f85209" />
 
 ---
 
