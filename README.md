@@ -90,11 +90,18 @@ By the end of this assignment, you should be able to:
 1. Ingest streaming data from the provided socket (e.g., localhost:9999) using Spark Structured Streaming.
 2. Parse the incoming JSON messages into a Spark DataFrame with proper columns (trip_id, driver_id, distance_km, fare_amount, timestamp).
 
-## **Instructions:**
-1. Create a Spark session.
-2. Use spark.readStream.format("socket") to read from localhost:9999.
-3. Parse the JSON payload into columns.
-4. Print the parsed data to the console (using .writeStream.format("console")).
+## **Logic Flow:**
+The task1.py script is the foundational data pipeline. It reads raw JSON data strings directly from the streaming source (TCP socket), parses them into a structured DataFrame using a predefined schema, and then writes the records to a target directory in CSV format. It operates in append output mode and uses a 5-second processing time trigger.
+
+Set of Steps of the File:
+1. Initialize Spark Session: Creates a Spark session named RideSharingAnalytics.
+2. Define Schema: Defines the StructType schema for the incoming ride-sharing JSON records (trip ID, driver ID, distance, fare, timestamp).
+3. Read Stream: Connects to the TCP socket (localhost:9999) using spark.readStream.
+4. Parse Data: Uses from_json to parse the raw string value column into structured columns based on the schema.
+5. Start Query: Initiates the streaming query using writeStream with:
+6. outputMode("append"): Writes only new records to the sink.
+7. format("csv"): Specifies the output format.
+8. trigger(processingTime='5 seconds'): Processes a batch of data every 5 seconds.
 
 ---
 
